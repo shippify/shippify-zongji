@@ -24,6 +24,8 @@ function ZongJi(dsn) {
   this.useChecksum = false;
 
   this._establishConnection(dsn);
+  this.grouping = false;
+  this.groupCommit = undefined;
 }
 
 util.inherits(ZongJi, EventEmitter);
@@ -248,9 +250,9 @@ ZongJi.prototype.start = function(options = {}) {
 
     // Do not emit events that have been filtered out
     if (event === undefined || event._filtered === true) return;
-
-    switch (event.getTypeName()) {
-      case 'TableMap': {
+    console.log('eventreceived', event.getTypeName());
+    switch (event.getTypeName().toLowerCase()) {
+      case 'tablemap': {
         const tableMap = this.tableMap[event.tableId];
         if (!tableMap) {
           this.connection.pause();
@@ -260,13 +262,71 @@ ZongJi.prototype.start = function(options = {}) {
             this.emit('binlog', event);
             this.connection.resume();
           });
+          // if table map contains mv_delivery and task then start grouping
+          const mappedTablesObject = event.tableMap;
+          let mappedTables = [];
+          Object.keys(mappedTablesObject).forEach((key) => {
+            const table = mappedTablesObject[key];
+            mappedTables.push(table.tableName);
+          });
+          if (mappedTables.includes('task')){
+            this.grouping = true;
+          }
           return;
+        }
+        // if table map contains mv_delivery and task then start grouping
+        const mappedTablesObject = event.tableMap;
+        let mappedTables = [];
+        Object.keys(mappedTablesObject).forEach((key) => {
+          const table = mappedTablesObject[key];
+          mappedTables.push(table.tableName);
+        });
+        if (mappedTables.includes('task')){
+          this.grouping = true;
         }
         break;
       }
-      case 'Rotate':
+      case 'rotate':
         if (this.options.filename !== event.binlogName) {
           this.options.filename = event.binlogName;
+        }
+        break;
+      case 'xid': 
+        if (this.grouping){
+          this.grouping = false;
+          if (this.groupCommit){
+            Object.keys(this.groupCommit).forEach((key) => {
+              const event = this.groupCommit[key];
+              this.emit('binlog', event);
+            });
+            this.groupCommit = undefined;              
+          }
+        }
+        break;
+      case 'writerows':
+      case 'updaterows':
+      case 'deleterows':
+        if (this.grouping){
+          if (!this.groupCommit){
+            this.groupCommit = {};
+          }
+          const tableName = event.tableId ? event.tableMap[event.tableId].tableName: undefined;
+          if (!tableName){
+            this.options.position = event.nextPosition;
+            this.emit('binlog', event);
+            return;
+          }
+          if (!this.groupCommit[tableName]){  // if grouping have not started
+            this.groupCommit[tableName] = event
+          } else { // if grouping is already started
+            event.rows.map((row)=>{
+              this.groupCommit[tableName].rows.push(row); 
+            })
+            this.groupCommit[tableName].timestamp = event.timestamp;
+            this.groupCommit[tableName].nextPosition = event.nextPosition;
+          }
+          this.options.position = event.nextPosition;
+          return;  
         }
         break;
     }
