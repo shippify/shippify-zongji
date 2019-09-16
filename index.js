@@ -257,11 +257,9 @@ ZongJi.prototype.start = function(options) {
       if (error) return self.emit('error', error);
       // Do not emit events that have been filtered out
       if (event === undefined || event._filtered === true) return;
-      console.log('eventreceived', event.getTypeName());
       switch (event.getTypeName().toLowerCase()) {
         case 'tablemap':
           var tableMap = self.tableMap[event.tableId];
-
           if (!tableMap) {
             self.connection.pause();
             self._fetchTableInfo(event, function() {
