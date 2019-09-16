@@ -49,6 +49,10 @@ ZongJi.prototype._establishConnection = function(dsn) {
     let connection = mysql.createConnection(options);
     connection.on('error', this.emit.bind(this, 'error'));
     connection.on('unhandledError', this.emit.bind(this, 'error'));
+    // Prevents idle connection
+    setInterval(function () {
+      connection.query('SELECT 1');
+    }, 10000);
     // don't need to call connection.connect() here
     // we use implicitly established connection
     // see https://github.com/mysqljs/mysql#establishing-connections
