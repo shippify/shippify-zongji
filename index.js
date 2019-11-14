@@ -279,7 +279,8 @@ ZongJi.prototype.start = function(options) {
               const table = mappedTablesObject[key];
               mappedTables.push(table.tableName);
             });
-            if (mappedTables.includes('task')){
+            //if (mappedTables.includes('task')){
+            if (mappedTables.findIndex(tableMapped => ['task','bra_documents'].findIndex(e => e == tableMapped) >= 0)) {
               this.grouping = true;
             }
             return;
@@ -291,7 +292,8 @@ ZongJi.prototype.start = function(options) {
             const table = mappedTablesObject[key];
             mappedTables.push(table.tableName);
           });
-          if (mappedTables.includes('task')){
+          // if (mappedTables.includes('task')){
+          if (mappedTables.findIndex(tableMapped => ['task','bra_documents'].findIndex(e => e == tableMapped) >= 0)) {
             this.grouping = true;
           }
           break;
