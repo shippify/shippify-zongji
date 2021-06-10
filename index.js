@@ -22,10 +22,10 @@ function ZongJi(dsn) {
   this.tableMap = {};
   this.ready = false;
   this.useChecksum = false;
-
-  this._establishConnection(dsn);
   this.grouping = false;
   this.groupCommit = undefined;
+
+  this._establishConnection(dsn);
 }
 
 util.inherits(ZongJi, EventEmitter);
@@ -262,7 +262,7 @@ ZongJi.prototype.start = function(options = {}) {
 
     // Do not emit events that have been filtered out
     if (event === undefined || event._filtered === true) return;
-    console.log('eventreceived', event.getTypeName());
+    //console.log('eventreceived', event.getTypeName());
     switch (event.getTypeName().toLowerCase()) {
       case 'tablemap': {
         const tableMap = this.tableMap[event.tableId];
