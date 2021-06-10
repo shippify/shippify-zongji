@@ -11,7 +11,7 @@ const ConnectionConfigMap = {
 const TableInfoQueryTemplate = 'SELECT ' +
   'COLUMN_NAME, COLLATION_NAME, CHARACTER_SET_NAME, ' +
   'COLUMN_COMMENT, COLUMN_TYPE ' +
-  'FROM information_schema.columns ' + "WHERE table_schema='%s' AND table_name='%s'";
+  'FROM information_schema.columns ' + "WHERE table_schema='%s' AND table_name='%s' ORDER BY ORDINAL_POSITION";
 
 function ZongJi(dsn) {
   EventEmitter.call(this);
@@ -29,6 +29,14 @@ function ZongJi(dsn) {
 }
 
 util.inherits(ZongJi, EventEmitter);
+
+ZongJi.prototype._executeCtrlCallbacks = function() {
+  if (this.ctrlCallbacks.length > 0) {
+    this.ctrlCallbacks.forEach(function(cb) {
+      setImmediate(cb);
+    });
+  }
+};
 
 // dsn - can be one instance of Connection or Pool / object / url string
 ZongJi.prototype._establishConnection = function(dsn) {
