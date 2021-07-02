@@ -281,7 +281,7 @@ ZongJi.prototype.start = function(options = {}) {
             const table = mappedTablesObject[key];
             mappedTables.push(table.tableName);
           });
-          if (mappedTables.includes('task')){
+          if (mappedTables.includes('task') || mappedTables.includes('mv_delivery')){
             this.grouping = true;
           }
           return;
@@ -293,7 +293,7 @@ ZongJi.prototype.start = function(options = {}) {
           const table = mappedTablesObject[key];
           mappedTables.push(table.tableName);
         });
-        if (mappedTables.includes('task')){
+        if (mappedTables.includes('task') || mappedTables.includes('mv_delivery')){
           this.grouping = true;
         }
         break;
